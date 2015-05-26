@@ -2,18 +2,23 @@
 var http = require('http');
 
 //Lets define a port we want to listen to
-const PORT=8080; 
+const PORT=3001; 
 
 function isPositiveInt(n) {
    var isInt = n % 1 === 0;
    return isInt && n>=0;
 }
 
+var proxy = {
+    "ortoandalucia56" : "http://www.erosion.geographica.gs/tileado/00-orto56-result",
+    "ortoandalucia79" : "http://peter.geographica.gs/05-result-79-level17"
+};
+
 //We need a function which handles requests and send response
 function handleRequest(request, response){
     var split = request.url.split("/");
 
-    if (split.length!=4){
+    if (split.length!=5){
         console.log(split);
         response.statusCode = 404;
         response.end("Not found");
@@ -21,6 +26,16 @@ function handleRequest(request, response){
     else{
         // remove begining
         split.shift();
+
+        var path = split[0];
+
+        if (!proxy.hasOwnProperty(path)){
+            response.statusCode = 404;
+            response.end("Not found");       
+            return;
+        }
+
+        split.shift();        
         // check all elements are numbers
         if (!isPositiveInt(split[0])  || !isPositiveInt(split[1])){
             response.statusCode = 404;
@@ -52,13 +67,9 @@ function handleRequest(request, response){
         }
 
         y +=  "." +fileSplit[1]
-
-        // response.end('It Works!! Path Hit: ' + request.url);
-        // http://peter.geographica.gs/05-result-79-level17/10/490/625.png
-        // http://www.erosion.geographica.gs/tileado/00-orto56-result/3/6/3.png
         
         response.writeHead(301,
-            {Location: 'http://www.erosion.geographica.gs/tileado/00-orto56-result/' + z + '/' +x +'/' + y}
+            {Location: proxy[path] + '/' + z + '/' +x +'/' + y}
         );
         response.end();
         
